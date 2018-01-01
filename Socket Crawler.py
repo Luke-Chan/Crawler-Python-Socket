@@ -166,7 +166,7 @@ def DownloadPage(url):
             http_get_imgs(geturl, path=url)
         else:
             geturl = url.rstrip("/") + "/" + item.lstrip("/")
-            http_get_imgs(geturl)
+            http_get_imgs(geturl, path=url)
     return ref_list
 
 # Class For Multithreading processing
@@ -223,7 +223,7 @@ Crawler(url, depth)
 
 # Program Finished, print a message in the end
 while True:
-    if (len(threading.enumerate()) <= 1):
+    if (len(threading.enumerate()) <= 2):
         print('\nProgram Finished, all images saved in "Download\\..."')
         break
 
