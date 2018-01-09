@@ -48,19 +48,19 @@ def http_get_html(url):
         s.send(http_header.encode())
 
         # get the html content
-        data = ''
+        data = b''
         while True:
             recv=s.recv(1024)
             if recv:
-                data += recv.decode()
+                data += recv
             else:
                 s.close()
                 break
 
-        header, html = data.split('\r\n\r\n', 1)
+        header, html = data.split(b'\r\n\r\n', 1)
 
         if ("404 Not Found") not in str(header):
-            return html
+            return str(html)
         else:
             print('Page 404 Not Found: "' + url + '"')
             return ""
@@ -90,6 +90,8 @@ def http_get_imgs(url, path=""):
         path = path.replace('http://','').replace('https://','')
         imgpath = path.strip("/") + "/"
         path = "Download/" + imgpath + imgname.strip("/")
+
+    path = path.replace("/", "\\")
     
     isExists = os.path.exists(path)
 
@@ -126,7 +128,7 @@ def http_get_imgs(url, path=""):
                     break
 
             header, img = data.split(b'\r\n\r\n', 1)
-
+            
             if ("404 Not Found") not in str(header):
                 f = open(path, "wb")
                 f.write(img)
@@ -141,15 +143,21 @@ def http_get_imgs(url, path=""):
 
 # Get all the URL of images from html, return type is list
 def html_img_url(html):
-    content = html.replace(" ","").replace("'", '"')
-    urls = re.findall('<imgsrc="(.*?)"', content)
-    return urls
+    if (type(html) == type("str")):
+        content = html.replace(" ","").replace("'", '"')
+        urls = re.findall('<imgsrc="(.*?)"', content)
+        return urls
+    else:
+        return ""
 
 # Get all URLs from html, return type is list
 def html_href_url(html):
-    urls = html.replace(" ","").replace("'", '"')
-    urls = re.findall('<ahref="(.*?)"', urls)
-    return urls
+    if (type(html) == type("str")):
+        urls = html.replace(" ","").replace("'", '"')
+        urls = re.findall('<ahref="(.*?)"', urls)
+        return urls
+    else:
+        return ""
 
 # Download all images of a page
 def DownloadPage(url):
@@ -183,14 +191,14 @@ class DownLoadThread(threading.Thread):
     # the program need two http requests for one page
 
 # Image Crawler, the main function
-def Crawler(url, depth):
+def Crawler(url, depth, max_thread):
     RestDepth = depth - 1
     # Download page by multithreading
     thread = DownLoadThread(url)
     thread.start()
     # Limit the running threads
     while True:
-        if(len(threading.enumerate()) < 10):
+        if(len(threading.enumerate()) < max_thread):
             break
     # Crawl all the pages that referenced in current page
     if (RestDepth > 0):
@@ -203,10 +211,10 @@ def Crawler(url, depth):
                 hosturl = hosturl.split('/')[0] + "/"   #get the host address
                 geturl = item.strip("/").lstrip("../") + "/"
                 geturl = hosturl + geturl.replace('http://','').replace('https://','')
-                Crawler(geturl, RestDepth)
+                Crawler(geturl, RestDepth, max_thread)
             else:
                 geturl = url.rstrip("/") + "/" + item.lstrip("/")
-                Crawler(geturl, RestDepth)
+                Crawler(geturl, RestDepth, max_thread)
     else:
         print("Crawler Traceback...\n\n")
 
@@ -217,9 +225,10 @@ def Crawler(url, depth):
 # program start parameters
 url = "csse.xjtlu.edu.cn/classes/CSE205/"
 depth = 3
+max_thread = 10
 
 # Starting the crawler, downloading images
-Crawler(url, depth)
+Crawler(url, depth, max_thread)
 
 # Program Finished, print a message in the end
 while True:
@@ -230,10 +239,6 @@ while True:
 # Program Finish, Pause
 stop = 0
 while True: stop = 1
-
-
-
-
 
 
 
